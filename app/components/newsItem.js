@@ -1,6 +1,5 @@
 import React from 'react';
 import {StyleSheet, View, Text, TouchableOpacity} from 'react-native';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 const newsItem = ({item}) => {
   return (
