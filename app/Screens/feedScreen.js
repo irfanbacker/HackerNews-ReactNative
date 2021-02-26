@@ -3,78 +3,62 @@ import {FlatList, ScrollView, RefreshControl} from 'react-native';
 
 import newsItem from '../components/newsItem';
 
-const DATA = [
-  {
-    id: 'bd7acbea-c1b1-46c2-aed5-3ad53abb28ba',
-    title: 'First Item',
-  },
-  {
-    id: '3ac68afc-c605-48d3-a4f8-fbd91aa97f63',
-    title: 'Second Item',
-  },
-  {
-    id: '58694a0f-3da1-471f-bd96-145571e29d72',
-    title: 'Third Item',
-  },
-  {
-    id: '58694a0f-3da1-471f-b453d96-145571e29d72',
-    title: 'Third Item',
-  },
-  {
-    id: '58694a0f-3da1-471f-b345d96-145571e29d72',
-    title: 'Third Item',
-  },
-  {
-    id: '58694a0f-3da1-471f-bd34596-145571e29d72',
-    title: 'Third Item',
-  },
-  {
-    id: '58694a0f-3da1-471f-bd34596-145571e29d72',
-    title: 'Third Item',
-  },
-  {
-    id: '58694a0f-3da1-471f-bd96-14557123e29d72',
-    title: 'Third Item',
-  },
-  {
-    id: '58694a0f-3da1-471f-bd96-14557231e29d72',
-    title: 'Third Item',
-  },
-  {
-    id: '5869423a0f-3da1-471f-bd96-145571e29d72',
-    title: 'Third Item',
-  },
-  {
-    id: '585694a0f-3da1-471f-bd96-145571e29d72',
-    title: 'Third Item',
-  },
-  {
-    id: '58694a0f-3da1-471f-bd96-14235571e29d72',
-    title: 'Third Item',
-  },
-  {
-    id: '58694a0f-3da231-471f-bd96-145571e29d72',
-    title: 'Third Item',
-  },
-];
+const getTopStoriesIDAsync = async () => {
+  try {
+    let response = await fetch(
+      'https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty',
+    );
+    let json = await response.json();
+    return json;
+  } catch (error) {
+    console.error(error);
+  }
+};
 
-const wait = (timeout) => {
-  return new Promise((resolve) => setTimeout(resolve, timeout));
+const getStoryByIDAsync = async (id) => {
+  try {
+    let response = await fetch(
+      'https://hacker-news.firebaseio.com/v0/item/' + id + '.json?print=pretty',
+    );
+    let json = await response.json();
+    return json;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const getTopStoriesAsync = async () => {
+  let storyIds = await getTopStoriesIDAsync();
+  let stories = [];
+  let storyPromise = storyIds.slice(0, 30).map(async (id) => {
+    let item = await getStoryByIDAsync(id);
+    if (item.type === 'story') {
+      stories.push(item);
+    }
+  });
+  await Promise.all(storyPromise);
+  return stories;
 };
 
 const FeedScreen = ({navigation, route}) => {
   const [refreshing, setRefreshing] = React.useState(false);
+  const [storiesData, setStories] = React.useState(route.params.data);
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    wait(2000).then(() => setRefreshing(false));
+    getTopStoriesAsync().then((stories) => {
+      setStories(stories);
+      setRefreshing(false);
+    });
   }, []);
   return (
-    <ScrollView
+    <FlatList
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }>
-      <FlatList data={DATA} renderItem={newsItem} />
-    </ScrollView>
+      }
+      data={storiesData}
+      renderItem={newsItem}
+      keyExtractor={(item, index) => index.toString()}
+    />
   );
 };
 
