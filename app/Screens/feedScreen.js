@@ -1,44 +1,16 @@
 import React from 'react';
-import {FlatList, ScrollView, RefreshControl} from 'react-native';
+import {
+  SafeAreaView,
+  FlatList,
+  RefreshControl,
+  StatusBar,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
 
-import newsItem from '../components/newsItem';
-
-const getTopStoriesIDAsync = async () => {
-  try {
-    let response = await fetch(
-      'https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty',
-    );
-    let json = await response.json();
-    return json;
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-const getStoryByIDAsync = async (id) => {
-  try {
-    let response = await fetch(
-      'https://hacker-news.firebaseio.com/v0/item/' + id + '.json?print=pretty',
-    );
-    let json = await response.json();
-    return json;
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-const getTopStoriesAsync = async () => {
-  let storyIds = await getTopStoriesIDAsync();
-  let stories = [];
-  let storyPromise = storyIds.slice(0, 30).map(async (id) => {
-    let item = await getStoryByIDAsync(id);
-    if (item.type === 'story') {
-      stories.push(item);
-    }
-  });
-  await Promise.all(storyPromise);
-  return stories;
-};
+import getTopStoriesAsync from '../API/hackerNews';
 
 const FeedScreen = ({navigation, route}) => {
   const [refreshing, setRefreshing] = React.useState(false);
@@ -50,16 +22,71 @@ const FeedScreen = ({navigation, route}) => {
       setRefreshing(false);
     });
   }, []);
+
+  const NewsItem = ({item}) => {
+    return (
+      <View style={itemStyle.container}>
+        <TouchableOpacity
+          onPress={() => {
+            console.log(item.url);
+            navigation.push('webview', {url: item.url});
+          }}
+          style={itemStyle.item}>
+          <Text style={itemStyle.title}>{item.title}</Text>
+          <Text />
+          <View
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}>
+            <Text style={itemStyle.caption}>{item.descendants} Comments</Text>
+            <Text style={itemStyle.caption}>{item.by}</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   return (
-    <FlatList
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      data={storiesData}
-      renderItem={newsItem}
-      keyExtractor={(item, index) => index.toString()}
-    />
+    <SafeAreaView>
+      <StatusBar
+        barStyle="dark-content"
+        hidden={false}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      <FlatList
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        data={storiesData}
+        renderItem={NewsItem}
+        keyExtractor={(item, index) => index.toString()}
+      />
+    </SafeAreaView>
   );
 };
+
+const itemStyle = StyleSheet.create({
+  container: {
+    padding: '2%',
+    paddingVertical: '1%',
+  },
+  item: {
+    backgroundColor: '#D3D3D3',
+    paddingVertical: 10.0,
+    paddingHorizontal: 10.0,
+    borderRadius: 5.0,
+  },
+  title: {
+    fontSize: 20.0,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  caption: {
+    fontSize: 12.0,
+  },
+});
 
 export default FeedScreen;

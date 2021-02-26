@@ -24,6 +24,7 @@ DerivedData
 # Android/IntelliJ
 #
 build/
+mykeystore.keystore
 .idea
 .gradle
 local.properties
