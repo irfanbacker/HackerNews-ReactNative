@@ -29,6 +29,7 @@ mykeystore.keystore
 .gradle
 local.properties
 *.iml
+*.hprof
 
 # node.js
 #
